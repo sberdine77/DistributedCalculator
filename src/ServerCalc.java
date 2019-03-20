@@ -13,6 +13,7 @@ public class ServerCalc {
 		
 		String recvMsg = null;
 		recvMsg = (String) inFromClient.readObject();
+		System.out.println(recvMsg);
 		
 		CalcImplementation calculator = new CalcImplementation();
 		float r = 0;

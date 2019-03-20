@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-
+import java.net.UnknownHostException;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 public class ClientCalc implements ActionListener {
 	
 	private static JTextField inputBox;
+	private static String op;
 	
 	private static void createWindow() {          
 	      JFrame frame = new JFrame("Calculator");
@@ -88,19 +89,83 @@ public class ClientCalc implements ActionListener {
 	      String command = e.getActionCommand();
 	      if (command.charAt(0) == 'C') {                      
 	         inputBox.setText("");
-	      }else if (command.charAt(0) == '=') {                    
-	         inputBox.setText(evaluate(inputBox.getText()));
-	      }else {                                
+	      }else if (command.charAt(0) == '=') { 
+	    	  System.out.println("BEFORE TRY");
+	         try {
+	        	 System.out.println("NOT ERROR");
+				inputBox.setText(evaluate(inputBox.getText()));
+			} catch (ClassNotFoundException | IOException e1) {
+				System.out.println("ERROR");
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+	      }else {
+	    	 if(command.charAt(0) == '+' || command.charAt(0) == '-' || command.charAt(0) == '+' || command.charAt(0) == '/') {
+	    		 op = "";
+	    		 op = op + (command.charAt(0));
+	    		 System.out.println(op);
+	    	 }
 	         inputBox.setText(inputBox.getText() + command);
 	      }
 	}
 	
-	public static String evaluate(String expression) {
+	public static String evaluate(String expression) throws UnknownHostException, ClassNotFoundException, IOException {
 		String operand1 = "";
 		String operand2 = "";
 		String operator = "";
-	    double result = 0;
-		return operand1 + operator + operand2 + "=" +result;
+	    String result = "";
+	    String[] pars = expression.split(op);
+	    System.out.println(pars);
+	    System.out.println(pars[0]);
+	    System.out.println(pars[1]);
+	    System.out.println(pars.length);
+	    if(pars.length == 2) {
+	    	System.out.println(op);
+	    	if(op.equals("+")) {
+	    		String operation = "sum(".concat(pars[0]).concat(",").concat(pars[1]).concat(")");
+	    		System.out.println(operation);
+	    		result = requestResponse(operation);
+	    	} else if(op.equals("-")) {
+	    		String operation = "sub(".concat(pars[0]).concat(",").concat(pars[1]).concat(")");
+	    		System.out.println("String:" + operation);
+	    		result = requestResponse(operation);
+	    	} else if(op.equals("x")) {
+	    		String operation = "mul(".concat(pars[0]).concat(",").concat(pars[1]).concat(")");
+	    		System.out.println(operation);
+	    		result = requestResponse(operation);
+	    	} else if(op.equals("/")) {
+	    		String operation = "div(".concat(pars[0]).concat(",").concat(pars[1]).concat(")");
+	    		System.out.println(operation);
+	    		result = requestResponse(operation);
+	    	}
+	    	return operand1 + operator + operand2 + "=" + result;
+	    } else {
+	    	return "";
+	    }
+	}
+	
+	public static String requestResponse(String operation) throws UnknownHostException, IOException, ClassNotFoundException {
+		
+		System.out.println("OIOI");
+		
+		Socket clientSocket = new Socket("localhost", 1313);
+		ObjectOutputStream outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
+		ObjectInputStream inFromServer = new ObjectInputStream(clientSocket.getInputStream());
+		
+		outToServer.writeObject("div(6,3)");
+		outToServer.flush();
+		
+
+		
+		String repMsg = null;
+		repMsg = (String) inFromServer.readObject();
+		
+		System.out.println(">>>" + repMsg);
+		
+		clientSocket.close();
+		outToServer.close();
+		inFromServer.close();
+		return repMsg;
 	}
 	
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
