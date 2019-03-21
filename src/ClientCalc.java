@@ -1,4 +1,8 @@
 import java.io.IOException;
+import java.net.DatagramPacket; 
+import java.net.DatagramSocket; 
+import java.net.InetAddress; 
+import java.util.StringTokenizer;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -86,6 +90,7 @@ public class ClientCalc implements ActionListener {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
+		System.out.println(e.getActionCommand());
 	      String command = e.getActionCommand();
 	      if (command.charAt(0) == 'C') {                      
 	         inputBox.setText("");
@@ -148,23 +153,33 @@ public class ClientCalc implements ActionListener {
 		
 		System.out.println("OIOI");
 		
-		Socket clientSocket = new Socket("localhost", 1313);
-		ObjectOutputStream outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
-		ObjectInputStream inFromServer = new ObjectInputStream(clientSocket.getInputStream());
+		DatagramSocket clientSocket = new DatagramSocket(); 
+		  
+        InetAddress ip = InetAddress.getLocalHost(); 
+        byte buf[] = null;
 		
-		outToServer.writeObject("div(6,3)");
-		outToServer.flush();
-		
-
+        buf = new byte[65535]; 
+        
+        // convert the String input into the byte array. 
+        buf = operation.getBytes();
+        
+        DatagramPacket DpSend = 
+                new DatagramPacket(buf, buf.length, ip, 1313);
+        
+        clientSocket.send(DpSend);
+        
+        buf = new byte[65535]; 
+        DatagramPacket DpReceive = 
+                             new DatagramPacket(buf, buf.length); 
+        clientSocket.receive(DpReceive); 
 		
 		String repMsg = null;
-		repMsg = (String) inFromServer.readObject();
+		repMsg = new String(buf,0,buf.length);
 		
 		System.out.println(">>>" + repMsg);
 		
 		clientSocket.close();
-		outToServer.close();
-		inFromServer.close();
+
 		return repMsg;
 	}
 	

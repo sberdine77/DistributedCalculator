@@ -1,4 +1,8 @@
 import java.io.IOException;
+import java.net.DatagramPacket; 
+import java.net.DatagramSocket; 
+import java.net.InetAddress; 
+import java.util.StringTokenizer;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -6,13 +10,24 @@ import java.net.Socket;
 
 public class ServerCalc {
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		ServerSocket welcomeSocket = new ServerSocket(1313);
-		Socket connectionSocket = welcomeSocket.accept();
-		ObjectOutputStream outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
-		ObjectInputStream inFromClient = new ObjectInputStream(connectionSocket.getInputStream());
+		DatagramSocket connectionSocket = new DatagramSocket(1313);
+		//Socket connectionSocket = welcomeSocket.accept();
+		//ObjectOutputStream outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
+		//ObjectInputStream inFromClient = new ObjectInputStream(connectionSocket.getInputStream());
 		
-		String recvMsg = null;
-		recvMsg = (String) inFromClient.readObject();
+		byte[] buf = null; 
+        DatagramPacket DpReceive = null; 
+        DatagramPacket DpSend = null;
+		
+		//recvMsg = (String) inFromClient.readObject();
+		
+		buf = new byte[65535]; 
+        DpReceive = new DatagramPacket(buf, buf.length); 
+        connectionSocket.receive(DpReceive); 
+
+        String recvMsg = new String(buf, 0, buf.length);
+        recvMsg = recvMsg.trim();
+		
 		System.out.println(recvMsg);
 		
 		CalcImplementation calculator = new CalcImplementation();
@@ -33,12 +48,13 @@ public class ServerCalc {
 		}
 		
 		String respMsg = Float.toString(r);
-		outToClient.writeObject(respMsg);
-		outToClient.flush();
+		buf = respMsg.getBytes();
 		
-		connectionSocket.close();
-		welcomeSocket.close();
-		outToClient.close();
-		inFromClient.close();
+		int port = DpReceive.getPort(); 
+		  
+        DpSend = new DatagramPacket(buf, buf.length, 
+                      InetAddress.getLocalHost(), port); 
+        connectionSocket.send(DpSend);
+		
 	}
 }
