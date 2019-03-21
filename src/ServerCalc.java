@@ -19,42 +19,50 @@ public class ServerCalc {
         DatagramPacket DpReceive = null; 
         DatagramPacket DpSend = null;
 		
-		//recvMsg = (String) inFromClient.readObject();
-		
-		buf = new byte[65535]; 
-        DpReceive = new DatagramPacket(buf, buf.length); 
-        connectionSocket.receive(DpReceive); 
+		while(true) {
+			//recvMsg = (String) inFromClient.readObject();
+			
+			buf = new byte[65535]; 
+	        DpReceive = new DatagramPacket(buf, buf.length); 
+	        connectionSocket.receive(DpReceive); 
 
-        String recvMsg = new String(buf, 0, buf.length);
-        recvMsg = recvMsg.trim();
-		
-		System.out.println(recvMsg);
-		
-		CalcImplementation calculator = new CalcImplementation();
-		float r = 0;
-		String opName = recvMsg.substring(0, 3);
-		String[] pars = recvMsg.substring(recvMsg.indexOf("(") + 1, recvMsg.indexOf(")")).split(",");
-		float a = Float.parseFloat(pars[0]);
-		float b = Float.parseFloat(pars[1]);
-		
-		if (opName.equals("sub")) {
-			r = calculator.sub(a, b);
-		} else if (opName.equals("sum")) {
-			r = calculator.sum(a, b);
-		} else if (opName.equals("div")) {
-			r = calculator.div(a, b);
-		} else if (opName.equals("mul")) {
-			r = calculator.mul(a, b);
+	        String recvMsg = new String(buf, 0, buf.length);
+	        recvMsg = recvMsg.trim();
+			
+			System.out.println(recvMsg);
+			
+			if (recvMsg.equals("bye")) { 
+	            System.out.println("Client sent bye.....EXITING"); 
+	            connectionSocket.close();
+	            break; 
+	        } 
+			
+			CalcImplementation calculator = new CalcImplementation();
+			float r = 0;
+			String opName = recvMsg.substring(0, 3);
+			String[] pars = recvMsg.substring(recvMsg.indexOf("(") + 1, recvMsg.indexOf(")")).split(",");
+			float a = Float.parseFloat(pars[0]);
+			float b = Float.parseFloat(pars[1]);
+			
+			if (opName.equals("sub")) {
+				r = calculator.sub(a, b);
+			} else if (opName.equals("sum")) {
+				r = calculator.sum(a, b);
+			} else if (opName.equals("div")) {
+				r = calculator.div(a, b);
+			} else if (opName.equals("mul")) {
+				r = calculator.mul(a, b);
+			}
+			
+			String respMsg = Float.toString(r);
+			buf = respMsg.getBytes();
+			
+			int port = DpReceive.getPort(); 
+			  
+	        DpSend = new DatagramPacket(buf, buf.length, 
+	                      InetAddress.getLocalHost(), port); 
+	        connectionSocket.send(DpSend);
 		}
-		
-		String respMsg = Float.toString(r);
-		buf = respMsg.getBytes();
-		
-		int port = DpReceive.getPort(); 
-		  
-        DpSend = new DatagramPacket(buf, buf.length, 
-                      InetAddress.getLocalHost(), port); 
-        connectionSocket.send(DpSend);
 		
 	}
 }

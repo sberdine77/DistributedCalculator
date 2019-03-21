@@ -6,12 +6,15 @@ import java.util.StringTokenizer;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -31,6 +34,50 @@ public class ClientCalc implements ActionListener {
 	      frame.setSize(200, 200);            
 	      frame.setLocationRelativeTo(null);
 	      frame.setVisible(true);
+	      
+	      frame.addWindowListener(new WindowAdapter() {
+	            @Override
+	            public void windowClosing(WindowEvent e) {
+	                System.out.println("WindowClosingDemo.windowClosing");
+	                DatagramSocket clientSocket = null;
+					try {
+						clientSocket = new DatagramSocket();
+					} catch (SocketException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} 
+	        		
+	        		System.out.println("Closing");
+	        		  
+	                InetAddress ip = null;
+					try {
+						ip = InetAddress.getLocalHost();
+					} catch (UnknownHostException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} 
+	                byte buf[] = null;
+	        		
+	                buf = new byte[65535]; 
+	                
+	                // convert the String input into the byte array. 
+	                buf = "bye".getBytes();
+	                
+	                DatagramPacket DpSend = 
+	                        new DatagramPacket(buf, buf.length, ip, 1313);
+	                
+	                try {
+						clientSocket.send(DpSend);
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+	                
+	                clientSocket.close();
+	                System.exit(0);
+	            }
+	        });
+	      
 	 }
 	
 	private static void createUI(JFrame frame) {
@@ -90,7 +137,6 @@ public class ClientCalc implements ActionListener {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		System.out.println(e.getActionCommand());
 	      String command = e.getActionCommand();
 	      if (command.charAt(0) == 'C') {                      
 	         inputBox.setText("");
@@ -105,13 +151,39 @@ public class ClientCalc implements ActionListener {
 				e1.printStackTrace();
 			}
 	      }else {
-	    	 if(command.charAt(0) == '+' || command.charAt(0) == '-' || command.charAt(0) == '+' || command.charAt(0) == '/') {
-	    		 op = "";
-	    		 op = op + (command.charAt(0));
-	    		 System.out.println(op);
+	    	 if(command.charAt(0) == '+') {
+	    		 op = "\\+";
+	    	 } else if(command.charAt(0) == '-') {
+	    		 op = "-";
+	    	 } else if(command.charAt(0) == 'x') {
+	    		 op = "x";
+	    	 } else if(command.charAt(0) == '/') {
+	    		 op = "/";
 	    	 }
 	         inputBox.setText(inputBox.getText() + command);
 	      }
+	}
+	
+	public void windowClosing(WindowEvent e) throws IOException {
+		DatagramSocket clientSocket = new DatagramSocket(); 
+		
+		System.out.println("Closing");
+		  
+        InetAddress ip = InetAddress.getLocalHost(); 
+        byte buf[] = null;
+		
+        buf = new byte[65535]; 
+        
+        // convert the String input into the byte array. 
+        buf = "bye".getBytes();
+        
+        DatagramPacket DpSend = 
+                new DatagramPacket(buf, buf.length, ip, 1313);
+        
+        clientSocket.send(DpSend);
+        
+        clientSocket.close();
+        
 	}
 	
 	public static String evaluate(String expression) throws UnknownHostException, ClassNotFoundException, IOException {
@@ -120,13 +192,11 @@ public class ClientCalc implements ActionListener {
 		String operator = "";
 	    String result = "";
 	    String[] pars = expression.split(op);
-	    System.out.println(pars);
-	    System.out.println(pars[0]);
-	    System.out.println(pars[1]);
+	    System.out.println("Pars: " + pars);
 	    System.out.println(pars.length);
 	    if(pars.length == 2) {
 	    	System.out.println(op);
-	    	if(op.equals("+")) {
+	    	if(op.equals("\\+")) {
 	    		String operation = "sum(".concat(pars[0]).concat(",").concat(pars[1]).concat(")");
 	    		System.out.println(operation);
 	    		result = requestResponse(operation);
